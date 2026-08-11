@@ -12,6 +12,7 @@ Uses simulated data and console output for demo purposes — this is a proof
 of concept, not a production system.
 """
 
+import json
 import random
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
@@ -266,6 +267,14 @@ def run_demo():
     print(f"    -> Dispatch method: {match_result['method']}")
     print(f"    -> {match_result['reason']}\n")
 
+    # ---- Raw data shape, for the frontend dev to build mock data against ----
+    print("[DATA FORMAT] anomaly object (JSON):")
+    print(json.dumps(anomaly, default=str, indent=2))
+    print()
+    print("[DATA FORMAT] match_result object (JSON):")
+    print(json.dumps({k: v for k, v in match_result.items() if k != "all_scores"}, default=str, indent=2))
+    print()
+
     print("[3] Notification:")
     notify(elder, anomaly, match_result)
 
@@ -283,6 +292,11 @@ def run_demo():
     report = escalate(elder, anomaly, cha_description="Elder is conscious but slower to respond than usual; "
                                                         "blood pressure not yet measured — recommend clinical review")
     print(report["summary_text"])
+    print()
+
+    # ---- Raw data shape for the escalation report ----
+    print("[DATA FORMAT] escalation report object (JSON):")
+    print(json.dumps(report, default=str, indent=2))
     print()
 
     print("=" * 60)
