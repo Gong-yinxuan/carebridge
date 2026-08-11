@@ -27,7 +27,7 @@ covering:
    LLM mistakes)
 
 **`security_01_pdpa.png`, `security_02_access.png`,
-`security_03_dataflow.png`, `security_04_qa.png`** — the same 4 pages
+`security_03_dataflow.png`** — the same 4 pages
 split into individual images (the source SVG has all 4 side by side on
 one large canvas, which is hard to read at a glance) — use these for
 pitch slides or when presenting one page at a time.
