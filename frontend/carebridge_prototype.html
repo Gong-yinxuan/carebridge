@@ -1,1 +1,464 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CareBridge — Prototype</title>
+<style>
+  :root {
+    --ink: #14213D;
+    --teal: #0E7C66;
+    --teal-dark: #0B5F50;
+    --bg: #F3F6F7;
+    --card: #FFFFFF;
+    --pastel-blue: #E7EEF9;
+    --pastel-green: #E5F4EC;
+    --pastel-yellow: #FCF2D8;
+    --pastel-red: #FBE9E9;
+    --text: #1C2430;
+    --text-muted: #5B6472;
+    --border: #E4E8EC;
+    --mono: 'SF Mono', 'Consolas', 'Menlo', monospace;
+  }
 
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .topbar {
+    background: var(--ink);
+    color: white;
+    padding: 14px 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .brand {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+  }
+
+  .brand-mark {
+    width: 26px; height: 26px;
+    border-radius: 8px;
+    background: var(--teal);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 13px;
+  }
+
+  .role-tag {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: #A9B4C4;
+  }
+
+  .tabs {
+    display: flex;
+    gap: 4px;
+    background: white;
+    border-bottom: 1px solid var(--border);
+    padding: 0 20px;
+    overflow-x: auto;
+  }
+
+  .tab {
+    padding: 14px 16px;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-muted);
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    white-space: nowrap;
+  }
+
+  .tab.active {
+    color: var(--teal-dark);
+    border-bottom-color: var(--teal);
+  }
+
+  .page {
+    max-width: 720px;
+    margin: 0 auto;
+    padding: 24px 20px 60px;
+    display: none;
+  }
+
+  .page.active { display: block; }
+
+  .eyebrow {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--teal-dark);
+    font-weight: 700;
+    margin-bottom: 6px;
+  }
+
+  h1 {
+    font-size: 22px;
+    margin: 0 0 4px;
+    letter-spacing: -0.01em;
+  }
+
+  .subtitle {
+    color: var(--text-muted);
+    font-size: 14px;
+    margin-bottom: 24px;
+  }
+
+  .card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 18px;
+    margin-bottom: 14px;
+  }
+
+  /* ---- Family Overview ---- */
+  .status-card {
+    background: var(--pastel-green);
+    border: none;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .status-left { display: flex; align-items: center; gap: 12px; }
+
+  .avatar {
+    width: 46px; height: 46px; border-radius: 50%;
+    background: var(--teal);
+    color: white;
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 700; font-size: 15px;
+  }
+
+  .status-name { font-weight: 700; font-size: 15px; }
+  .status-sub { font-size: 12.5px; color: var(--text-muted); }
+
+  .pill {
+    font-size: 11px; font-weight: 700;
+    padding: 4px 10px; border-radius: 999px;
+    background: white; color: var(--teal-dark);
+  }
+
+  .call-row {
+    display: flex; gap: 10px; margin: 14px 0 18px;
+  }
+
+  .btn {
+    flex: 1;
+    padding: 12px;
+    border-radius: 10px;
+    border: none;
+    font-weight: 700;
+    font-size: 13.5px;
+    cursor: pointer;
+  }
+
+  .btn-primary { background: var(--teal); color: white; }
+  .btn-secondary { background: white; border: 1px solid var(--border); color: var(--text); }
+
+  .section-label {
+    font-size: 12px; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 0.05em; color: var(--text-muted);
+    margin: 20px 0 10px;
+  }
+
+  .timeline-item {
+    display: flex; gap: 12px; padding: 12px 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .timeline-item:last-child { border-bottom: none; }
+
+  .dot { width: 8px; height: 8px; border-radius: 50%; margin-top: 6px; flex-shrink: 0; }
+  .dot-ok { background: var(--teal); }
+  .dot-warn { background: #C98A2B; }
+  .dot-alert { background: #C24B4B; }
+
+  .timeline-text { font-size: 13.5px; }
+  .timeline-time { font-size: 11.5px; color: var(--text-muted); margin-top: 2px; }
+
+  .chat-box {
+    background: var(--pastel-blue);
+    border-radius: 14px;
+    padding: 16px;
+  }
+
+  .chat-q {
+    background: white; border-radius: 10px; padding: 10px 12px;
+    font-size: 13.5px; margin-bottom: 10px;
+  }
+
+  .chat-a {
+    font-size: 13.5px; line-height: 1.5; color: var(--text);
+  }
+
+  /* ---- CHA Check-in ---- */
+  .checklist-item {
+    display: flex; align-items: center; gap: 10px;
+    padding: 10px 0; border-bottom: 1px solid var(--border);
+    font-size: 14px;
+  }
+  .checklist-item:last-child { border-bottom: none; }
+
+  .check-icon {
+    width: 22px; height: 22px; border-radius: 6px;
+    background: var(--pastel-green); color: var(--teal-dark);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 13px; font-weight: 700; flex-shrink: 0;
+  }
+
+  textarea {
+    width: 100%;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 12px;
+    font-family: inherit;
+    font-size: 13.5px;
+    resize: vertical;
+    min-height: 70px;
+    margin-top: 8px;
+  }
+
+  label.field-label {
+    font-size: 12.5px; font-weight: 700; color: var(--text-muted);
+    display: block; margin-top: 16px;
+  }
+
+  /* ---- Escalation ---- */
+  .escalate-banner {
+    background: var(--pastel-red);
+    border-radius: 14px;
+    padding: 16px;
+    display: flex; align-items: center; gap: 12px;
+    margin-bottom: 18px;
+  }
+
+  .escalate-icon {
+    width: 34px; height: 34px; border-radius: 50%;
+    background: #C24B4B; color: white;
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 700; flex-shrink: 0;
+  }
+
+  .kv-row {
+    display: flex; justify-content: space-between;
+    padding: 9px 0; border-bottom: 1px solid var(--border);
+    font-size: 13.5px;
+  }
+  .kv-row:last-child { border-bottom: none; }
+  .kv-key { color: var(--text-muted); }
+  .kv-val { font-weight: 600; text-align: right; }
+
+  .json-panel {
+    background: var(--ink);
+    color: #B8E6D8;
+    font-family: var(--mono);
+    font-size: 12px;
+    line-height: 1.6;
+    border-radius: 12px;
+    padding: 16px;
+    overflow-x: auto;
+    white-space: pre;
+  }
+
+  .json-key { color: #7FD1B9; }
+  .json-str { color: #F2C572; }
+  .json-panel-label {
+    font-size: 11px; color: #A9B4C4; text-transform: uppercase;
+    letter-spacing: 0.06em; margin-bottom: 8px; font-family: -apple-system, sans-serif;
+  }
+
+  .footnote {
+    font-size: 12px; color: var(--text-muted);
+    background: var(--pastel-blue);
+    border-radius: 10px; padding: 10px 12px;
+    margin-top: 16px;
+  }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="brand">
+    <div class="brand-mark">🌉</div>
+    CareBridge
+  </div>
+  <div class="role-tag">Prototype · Sprint Demo</div>
+</div>
+
+<div class="tabs">
+  <div class="tab active" data-page="family">Family view</div>
+  <div class="tab" data-page="cha">CHA check-in</div>
+  <div class="tab" data-page="escalate">Escalation summary</div>
+</div>
+
+<!-- ===================== PAGE 1: FAMILY OVERVIEW ===================== -->
+<div class="page active" id="family">
+  <div class="eyebrow">David's view</div>
+  <h1>Mdm Lim</h1>
+  <div class="subtitle">Block 123A · Early/mid-stage dementia</div>
+
+  <div class="card status-card">
+    <div class="status-left">
+      <div class="avatar">ML</div>
+      <div>
+        <div class="status-name">Doing okay right now</div>
+        <div class="status-sub">Last check-in: 20 min ago by Chen (CHA)</div>
+      </div>
+    </div>
+    <div class="pill">STABLE</div>
+  </div>
+
+  <div class="call-row">
+    <button class="btn btn-primary">📞 Call Mdm Lim</button>
+    <button class="btn btn-secondary">💬 Message CHA</button>
+  </div>
+
+  <div class="section-label">This week</div>
+  <div class="card">
+    <div class="timeline-item">
+      <div class="dot dot-ok"></div>
+      <div>
+        <div class="timeline-text">CHA visit — medication confirmed, short walk together</div>
+        <div class="timeline-time">Today, 9:40 AM</div>
+      </div>
+    </div>
+    <div class="timeline-item">
+      <div class="dot dot-warn"></div>
+      <div>
+        <div class="timeline-text">Heart rate slightly elevated — flagged, CHA checked in person</div>
+        <div class="timeline-time">Yesterday, 4:12 PM</div>
+      </div>
+    </div>
+    <div class="timeline-item">
+      <div class="dot dot-ok"></div>
+      <div>
+        <div class="timeline-text">Routine check-in — all normal, chatted for 15 min</div>
+        <div class="timeline-time">Mon, 10:05 AM</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="section-label">Ask about her week</div>
+  <div class="chat-box">
+    <div class="chat-q">"How has mum been doing this week?"</div>
+    <div class="chat-a">
+      3 check-ins this week, all went well. One heart-rate alert on Monday —
+      CHA visited in person and confirmed she was fine, just tired. No missed
+      medication logged. She's been chatting with her CHA during visits.
+    </div>
+  </div>
+
+  <div class="footnote">
+    This summary covers visit records only — it isn't a medical diagnosis.
+    Contact her care team for clinical questions.
+  </div>
+</div>
+
+<!-- ===================== PAGE 2: CHA CHECK-IN ===================== -->
+<div class="page" id="cha">
+  <div class="eyebrow">Chen (CHA) · On-site visit</div>
+  <h1>Check-in — Mdm Lim</h1>
+  <div class="subtitle">Block 123A · Triggered by: heart rate alert (medium)</div>
+
+  <div class="card">
+    <div class="checklist-item">
+      <div class="check-icon">✓</div>
+      Medication self-taken today
+    </div>
+    <div class="checklist-item">
+      <div class="check-icon">✓</div>
+      Had a meal / drank water recently
+    </div>
+    <div class="checklist-item">
+      <div class="check-icon">✓</div>
+      Oriented — knows the day and where she is
+    </div>
+    <div class="checklist-item">
+      <div class="check-icon">–</div>
+      No signs of distress
+    </div>
+  </div>
+
+  <label class="field-label">What happened</label>
+  <textarea placeholder="e.g. Checked on Mdm Lim after the heart rate alert — she seems fine, slightly tired.">Checked on Mdm Lim after the heart rate alert — she seems fine, slightly tired.</textarea>
+
+  <label class="field-label">Interaction / activity this visit</label>
+  <textarea placeholder="e.g. Had a short chat, took a walk around the void deck.">Had a 15-minute chat and short walk around the void deck together.</textarea>
+
+  <div class="call-row" style="margin-top:20px;">
+    <button class="btn btn-secondary">🚨 Escalate to hospital</button>
+    <button class="btn btn-primary">Save check-in</button>
+  </div>
+
+  <div class="footnote">
+    CHAs record observations only — they do not diagnose, dose, or alter treatment.
+  </div>
+</div>
+
+<!-- ===================== PAGE 3: ESCALATION SUMMARY ===================== -->
+<div class="page" id="escalate">
+  <div class="eyebrow">Auto-generated · Sent to hospital triage</div>
+  <h1>Escalation summary</h1>
+  <div class="subtitle">Triggered by CHA · Merged with 1 family confirmation</div>
+
+  <div class="escalate-banner">
+    <div class="escalate-icon">!</div>
+    <div>
+      <div style="font-weight:700; font-size:14px;">Medium-level anomaly</div>
+      <div style="font-size:12.5px; color:var(--text-muted);">Heart rate deviation, escalated by recent trend (3 flags in 3 days)</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="kv-row"><div class="kv-key">Elder</div><div class="kv-val">Mdm Lim (Block 123A)</div></div>
+    <div class="kv-row"><div class="kv-key">Condition</div><div class="kv-val">Early/mid-stage dementia</div></div>
+    <div class="kv-row"><div class="kv-key">Signal</div><div class="kv-val">vital_abnormal — heart_rate</div></div>
+    <div class="kv-row"><div class="kv-key">Recent flagged (3d)</div><div class="kv-val">3</div></div>
+    <div class="kv-row"><div class="kv-key">Triggered by</div><div class="kv-val">CHA + Family</div></div>
+  </div>
+
+  <div class="section-label">Raw report sent to hospital</div>
+  <div class="json-panel"><span class="json-panel-label">// escalation_report.json</span>
+{
+  <span class="json-key">"elder_name"</span>: <span class="json-str">"Mdm Lim"</span>,
+  <span class="json-key">"signal_type"</span>: <span class="json-str">"vital_abnormal"</span>,
+  <span class="json-key">"anomaly_level"</span>: <span class="json-str">"medium"</span>,
+  <span class="json-key">"recent_flagged_count"</span>: 3,
+  <span class="json-key">"cha_description"</span>: <span class="json-str">"seems fine, slightly tired"</span>,
+  <span class="json-key">"interaction_note"</span>: <span class="json-str">"15-min chat + short walk"</span>,
+  <span class="json-key">"triggered_by"</span>: [<span class="json-str">"cha"</span>, <span class="json-str">"family"</span>],
+  <span class="json-key">"merged"</span>: false
+}</div>
+
+  <div class="footnote">
+    Generated by CareBridge's backend logic — same structure as the live demo script output.
+  </div>
+</div>
+
+<script>
+  document.querySelectorAll('.tab').forEach(tab => {
+    tab.addEventListener('click', () => {
+      document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+      document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+      tab.classList.add('active');
+      document.getElementById(tab.dataset.page).classList.add('active');
+    });
+  });
+</script>
+
+</body>
+</html>
