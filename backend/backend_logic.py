@@ -35,9 +35,11 @@ class CHA:
 @dataclass
 class Elder:
     name: str
-    block: str
+    block: str  # internal — used for CHA proximity matching only, not shown to the user
     primary_cha: str
     emergency_contact: str
+    address: str = ""  # human-readable, e.g. "Toa Payoh, 3-room flat" — shown in reports/UI
+    age: int | None = None
     condition: str = "early/mid-stage dementia"
     safe_zone_radius_m: int = 300  # how far from home counts as "still safe"
 
@@ -235,7 +237,8 @@ def escalate(elder: Elder, anomaly: dict, triggered_by: str, cha_description: st
     ts = now.strftime("%Y-%m-%d %H:%M")
     report = {
         "elder_name": elder.name,
-        "block": elder.block,
+        "address": elder.address or elder.block,
+        "age": elder.age,
         "condition": elder.condition,
         "signal_type": anomaly["signal_type"],
         "anomaly_level": anomaly["level"],
@@ -251,7 +254,7 @@ def escalate(elder: Elder, anomaly: dict, triggered_by: str, cha_description: st
     # summary_text = call_llm_api(f"Generate a concise hospital triage summary: {report}")
     summary_text = (
         f"[CareBridge Triage Summary] {ts}\n"
-        f"Elder: {elder.name} (Block {elder.block}, {elder.condition})\n"
+        f"Elder: {elder.name}, age {elder.age} ({elder.address or elder.block}) — {elder.condition}\n"
         f"Signal: {anomaly['signal_type']} — level {anomaly['level']}\n"
         f"Detail: {anomaly['detail']}\n"
         f"CHA on-site description: {cha_description or '(none provided)'}\n"
@@ -274,7 +277,7 @@ def escalate(elder: Elder, anomaly: dict, triggered_by: str, cha_description: st
 
 ROLE_FIELD_ACCESS = {
     "cha": {
-        "elder_name", "block", "signal_type", "anomaly_level", "detail",
+        "elder_name", "address", "signal_type", "anomaly_level", "detail",
         "cha_description", "interaction_note",
     },
     "family": {
@@ -321,10 +324,12 @@ def run_demo():
     ]
 
     elder = Elder(
-        name="Mdm Lim",
-        block="123A",
+        name="Mdm Lim Ah Kim",
+        block="123A",  # internal matching key only
         primary_cha="Lee (CHA)",
-        emergency_contact="David (son)",
+        emergency_contact="David Tan (son)",
+        address="Toa Payoh, 3-room flat",
+        age=78,
     )
 
     now = datetime.now()
