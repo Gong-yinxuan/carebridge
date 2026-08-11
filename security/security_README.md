@@ -1,4 +1,4 @@
-# security/
+# security
 
 Security, privacy, and PDPA compliance design for CareBridge. Written for
 a 2.5-day design sprint — scoped enough to demo and defend, not a
