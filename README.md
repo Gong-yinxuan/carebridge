@@ -107,7 +107,7 @@ design decisions*, not a production system:
 ## Team
 
 - **Frontend & backend logic** — Yinxuan
-- **Storyboard, business case & security design** — [teammate]
+- **Storyboard, business case & security design** — [qixuan Zhuo]
   
 
 
