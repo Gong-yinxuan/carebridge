@@ -84,9 +84,8 @@ Smartwatch signal → Anomaly detection → CHA matching → Notification → (i
      raw code)
 
 4. **`security/`** — `SECURITY.md` documents the security and PDPA design,
-   grounded in the actual access-control code in `backend/`. The
-   `CareBridge_Safety_Access_Design_EN.svg` diagrams (data classification,
-   access matrix, secure data flow, Q&A defence) were produced separately
+   grounded in the actual access-control code in `backend/`. diagrams (data classification,
+   access matrix, secure data flow) were produced separately
    and are kept consistent with the code — the access matrix covers the
    three roles implemented in `backend_logic.py` (family, CHA, hospital).
 
