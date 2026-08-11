@@ -186,6 +186,7 @@
   .dot-ok { background: var(--teal); }
   .dot-warn { background: #C98A2B; }
   .dot-alert { background: #C24B4B; }
+  .dot-social { background: #4A7FC9; }
 
   .timeline-text { font-size: 13.5px; }
   .timeline-time { font-size: 11.5px; color: var(--text-muted); margin-top: 2px; }
@@ -262,24 +263,26 @@
   .kv-key { color: var(--text-muted); }
   .kv-val { font-weight: 600; text-align: right; }
 
-  .json-panel {
-    background: var(--ink);
-    color: #B8E6D8;
-    font-family: var(--mono);
-    font-size: 12px;
-    line-height: 1.6;
-    border-radius: 12px;
-    padding: 16px;
-    overflow-x: auto;
-    white-space: pre;
+  .toggle-json {
+    background: white;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 11px 14px;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+    text-align: left;
+    margin-bottom: 10px;
   }
 
-  .json-key { color: #7FD1B9; }
-  .json-str { color: #F2C572; }
-  .json-panel-label {
-    font-size: 11px; color: #A9B4C4; text-transform: uppercase;
-    letter-spacing: 0.06em; margin-bottom: 8px; font-family: -apple-system, sans-serif;
-  }
+  .toggle-json:hover { background: var(--pastel-blue); }
+
+  #toggle-icon { color: var(--teal-dark); font-size: 11px; }
 
   .footnote {
     font-size: 12px; color: var(--text-muted);
@@ -307,9 +310,9 @@
 
 <!-- ===================== PAGE 1: FAMILY OVERVIEW ===================== -->
 <div class="page active" id="family">
-  <div class="eyebrow">David's view</div>
-  <h1>Mdm Lim</h1>
-  <div class="subtitle">Block 123A · Early/mid-stage dementia</div>
+  <div class="eyebrow">David Tan (45) · son</div>
+  <h1>Mdm Lim Ah Kim</h1>
+  <div class="subtitle">Toa Payoh · 3-room flat · Early/mid-stage dementia · Age 78</div>
 
   <div class="card status-card">
     <div class="status-left">
@@ -350,6 +353,13 @@
         <div class="timeline-time">Mon, 10:05 AM</div>
       </div>
     </div>
+    <div class="timeline-item">
+      <div class="dot dot-social"></div>
+      <div>
+        <div class="timeline-text">Social visit — joined 2 neighbours for chess at the void deck</div>
+        <div class="timeline-time">Sun, 3:30 PM</div>
+      </div>
+    </div>
   </div>
 
   <div class="section-label">Ask about her week</div>
@@ -372,7 +382,7 @@
 <div class="page" id="cha">
   <div class="eyebrow">Chen (CHA) · On-site visit</div>
   <h1>Check-in — Mdm Lim</h1>
-  <div class="subtitle">Block 123A · Triggered by: heart rate alert (medium)</div>
+  <div class="subtitle">Toa Payoh · Triggered by: heart rate alert (medium)</div>
 
   <div class="card">
     <div class="checklist-item">
@@ -424,25 +434,23 @@
   </div>
 
   <div class="card">
-    <div class="kv-row"><div class="kv-key">Elder</div><div class="kv-val">Mdm Lim (Block 123A)</div></div>
+    <div class="kv-row"><div class="kv-key">Elder</div><div class="kv-val">Mdm Lim Ah Kim (Toa Payoh)</div></div>
     <div class="kv-row"><div class="kv-key">Condition</div><div class="kv-val">Early/mid-stage dementia</div></div>
     <div class="kv-row"><div class="kv-key">Signal</div><div class="kv-val">vital_abnormal — heart_rate</div></div>
     <div class="kv-row"><div class="kv-key">Recent flagged (3d)</div><div class="kv-val">3</div></div>
     <div class="kv-row"><div class="kv-key">Triggered by</div><div class="kv-val">CHA + Family</div></div>
   </div>
 
-  <div class="section-label">Raw report sent to hospital</div>
-  <div class="json-panel"><span class="json-panel-label">// escalation_report.json</span>
-{
-  <span class="json-key">"elder_name"</span>: <span class="json-str">"Mdm Lim"</span>,
-  <span class="json-key">"signal_type"</span>: <span class="json-str">"vital_abnormal"</span>,
-  <span class="json-key">"anomaly_level"</span>: <span class="json-str">"medium"</span>,
-  <span class="json-key">"recent_flagged_count"</span>: 3,
-  <span class="json-key">"cha_description"</span>: <span class="json-str">"seems fine, slightly tired"</span>,
-  <span class="json-key">"interaction_note"</span>: <span class="json-str">"15-min chat + short walk"</span>,
-  <span class="json-key">"triggered_by"</span>: [<span class="json-str">"cha"</span>, <span class="json-str">"family"</span>],
-  <span class="json-key">"merged"</span>: false
-}</div>
+  <div class="section-label">Full report sent to hospital</div>
+  <button class="toggle-json" onclick="toggleJson()">
+    <span id="toggle-icon">▸</span> View full report
+  </button>
+  <div class="card" id="json-panel" style="display:none;">
+    <div class="kv-row"><div class="kv-key">CHA notes</div><div class="kv-val">"seems fine, slightly tired"</div></div>
+    <div class="kv-row"><div class="kv-key">Interaction logged</div><div class="kv-val">15-min chat + short walk</div></div>
+    <div class="kv-row"><div class="kv-key">Confirmed by</div><div class="kv-val">CHA, Family</div></div>
+    <div class="kv-row"><div class="kv-key">Duplicate reports merged</div><div class="kv-val">No</div></div>
+  </div>
 
   <div class="footnote">
     Generated by CareBridge's backend logic — same structure as the live demo script output.
@@ -450,6 +458,14 @@
 </div>
 
 <script>
+  function toggleJson() {
+    const panel = document.getElementById('json-panel');
+    const icon = document.getElementById('toggle-icon');
+    const isHidden = panel.style.display === 'none';
+    panel.style.display = isHidden ? 'block' : 'none';
+    icon.textContent = isHidden ? '▾' : '▸';
+  }
+
   document.querySelectorAll('.tab').forEach(tab => {
     tab.addEventListener('click', () => {
       document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
@@ -459,6 +475,9 @@
     });
   });
 </script>
+
+</body>
+</html>
 
 </body>
 </html>
