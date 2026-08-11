@@ -42,7 +42,6 @@ carebridge/
 ├── iot-integration/       Simulated smartwatch signal stream (no real hardware for this sprint)
 ├── frontend/              3-page interactive prototype (family view, CHA check-in, escalation summary)
 ├── security/              PDPA compliance, access control design, security diagrams
-├── docs/                  Business case, translated docs, sprint planning
 └── README.md
 ```
 
