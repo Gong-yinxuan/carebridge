@@ -1,19 +1,22 @@
 """
-CareBridge — Core Logic Demo v2
-Adds three features on top of v1:
-1. Trend detection: escalates a low-risk single signal if the elder has had
-   frequent recent anomalies (guards against false negatives / missed alerts)
-2. Deduplication: merges a new IoT signal into an already-active case for the
-   same elder instead of dispatching a duplicate task
-3. Escalation summary: generates a structured report when a CHA or family
-   member triggers an upgrade, ready to be handed off to the hospital
+CareBridge — Core Logic Demo v3 (Smartwatch Edition)
+Pivot from pillbox-sensor signals to a smartwatch worn by the elder:
+GPS geofence exit (wandering risk), SOS button press, abnormal vitals,
+and device-tamper detection. Built for the dementia-care persona (Mdm Lim),
+where the core risk is wandering / getting lost, missed self-care, and
+medical emergencies — not just "did they open a pillbox".
 
-Uses simulated data and console output for demo purposes — this is a proof
-of concept, not a production system.
+Kept from v2: trend detection, case dedup, primary-CHA + dynamic-fallback
+matching, escalation dedup across CHA/family triggers, role-based permission
+view. New in v3: signal types matched to a wearable device, an "interaction
+log" field so CHA visits capture companionship/activity (not just anomaly
+checks), and SOS/tamper events that bypass tiered classification entirely
+since they are unambiguous emergencies.
+
+Simulated data + console output — proof of concept, not a production system.
 """
 
 import json
-import random
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 
@@ -35,80 +38,126 @@ class Elder:
     block: str
     primary_cha: str
     emergency_contact: str
+    condition: str = "early/mid-stage dementia"
+    safe_zone_radius_m: int = 300  # how far from home counts as "still safe"
 
 
 @dataclass
-class IoTEvent:
+class WatchEvent:
+    """
+    A signal coming from the elder's smartwatch. `signal_type` determines
+    which fields in `payload` are relevant:
+      - "sos_pressed"      : payload = {} (button press is unambiguous on its own)
+      - "geofence_exit"     : payload = {"minutes_outside": int, "distance_m": int}
+      - "vital_abnormal"    : payload = {"vital": "heart_rate"/"blood_pressure", "value": ..., "normal_range": ...}
+      - "device_tampered"   : payload = {} (strap removed/broken)
+      - "no_movement"       : payload = {"minutes_stationary": int}
+    """
     elder_name: str
     signal_type: str
-    minutes_overdue: int
+    payload: dict = field(default_factory=dict)
     timestamp: datetime = field(default_factory=datetime.now)
 
 
 # ---------- Global state (in-memory for the demo; a real system would use a DB) ----------
 
-# Per-elder history of past signals, used for trend detection
 event_history: dict[str, list[dict]] = {}
-
-# Cases currently being handled, used for deduplication. key = elder name
 active_cases: dict[str, dict] = {}
+active_escalations: dict[str, dict] = {}
 
 
-# ---------- 1. Anomaly detection (rule-based tiers + trend check) ----------
+# ---------- 1. Anomaly detection (signal-specific rules + trend check) ----------
 
-def detect_anomaly(event: IoTEvent) -> dict:
+def detect_anomaly(event: WatchEvent) -> dict:
     """
-    First pass: classify severity based on signal type and how overdue it is.
-    Second pass (trend detection): even if this single event looks low-risk,
-    escalate it if the elder has already had multiple recent anomalies —
-    this guards against the case where each individual signal looks fine,
-    but the pattern over time actually indicates a problem.
+    SOS and tamper events are unambiguous emergencies — they bypass tiered
+    classification and go straight to "high" priority with no trend logic
+    needed. Geofence exits and vital-sign anomalies are still tiered, since
+    those genuinely benefit from a graded response (a 3-minute step outside
+    the safe zone is not the same as being missing for 40 minutes).
     """
-    thresholds = {
-        "pillbox_not_opened": {"low": 15, "medium": 30, "high": 60},
-        "no_motion_detected": {"low": 20, "medium": 45, "high": 90},
-    }
-    t = thresholds.get(event.signal_type, {"low": 15, "medium": 30, "high": 60})
-    minutes = event.minutes_overdue
+    level, priority, detail = "low", 1, {}
 
-    if minutes < t["low"]:
-        level, priority = "ignore", 0
-    elif minutes < t["medium"]:
-        level, priority = "low", 1
-    elif minutes < t["high"]:
-        level, priority = "medium", 2
-    else:
+    if event.signal_type == "sos_pressed":
         level, priority = "high", 3
+        detail = {"reason": "SOS button pressed — treat as emergency regardless of context"}
 
-    # --- Trend detection ---
-    history = event_history.setdefault(event.elder_name, [])
-    history.append({"level": level, "priority": priority, "timestamp": event.timestamp})
+    elif event.signal_type == "device_tampered":
+        level, priority = "high", 3
+        detail = {"reason": "Watch strap removed or broken — safety device offline, "
+                             "wandering/emergency signals no longer being received"}
 
-    recent_window = event.timestamp - timedelta(days=3)
-    recent_events = [h for h in history if h["timestamp"] >= recent_window]
-    recent_flagged = [h for h in recent_events if h["priority"] >= 1]  # low or above counts as flagged
+    elif event.signal_type == "geofence_exit":
+        minutes = event.payload.get("minutes_outside", 0)
+        distance = event.payload.get("distance_m", 0)
+        if minutes < 5:
+            level, priority = "ignore", 0
+        elif minutes < 15:
+            level, priority = "low", 1
+        elif minutes < 30:
+            level, priority = "medium", 2
+        else:
+            level, priority = "high", 3
+        detail = {"minutes_outside": minutes, "distance_m": distance}
 
-    escalated_by_trend = False
-    if level == "ignore" and len(recent_flagged) >= 0:
-        pass  # "ignore"-level events don't count toward the trend, to avoid noise
+    elif event.signal_type == "vital_abnormal":
+        vital = event.payload.get("vital")
+        value = event.payload.get("value")
+        deviation = event.payload.get("deviation_pct", 0)  # % outside normal range
+        if deviation < 15:
+            level, priority = "low", 1
+        elif deviation < 30:
+            level, priority = "medium", 2
+        else:
+            level, priority = "high", 3
+        detail = {"vital": vital, "value": value, "deviation_pct": deviation}
 
-    if level in ("low", "medium") and len(recent_flagged) >= 2:
-        # 2+ low/medium anomalies in the past 3 days -> bump this one up a tier
-        original_priority = priority
-        priority = min(priority + 1, 3)
-        level = {1: "low", 2: "medium", 3: "high"}[priority]
-        escalated_by_trend = priority != original_priority
+    elif event.signal_type == "no_movement":
+        minutes = event.payload.get("minutes_stationary", 0)
+        if minutes < 30:
+            level, priority = "ignore", 0
+        elif minutes < 60:
+            level, priority = "low", 1
+        elif minutes < 120:
+            level, priority = "medium", 2
+        else:
+            level, priority = "high", 3
+        detail = {"minutes_stationary": minutes}
 
-    return {
+    else:
+        detail = {"reason": f"unrecognised signal_type: {event.signal_type}"}
+
+    result = {
+        "signal_type": event.signal_type,
         "level": level,
         "priority": priority,
-        "minutes_overdue": minutes,
-        "escalated_by_trend": escalated_by_trend,
-        "recent_flagged_count": len(recent_flagged),
+        "detail": detail,
+        "escalated_by_trend": False,
+        "recent_flagged_count": 0,
+        "bypassed_tiering": event.signal_type in ("sos_pressed", "device_tampered"),
     }
 
+    # --- Trend detection (skipped for SOS/tamper — already at max priority) ---
+    if not result["bypassed_tiering"]:
+        history = event_history.setdefault(event.elder_name, [])
+        history.append({"level": level, "priority": priority, "timestamp": event.timestamp})
+        recent_window = event.timestamp - timedelta(days=3)
+        recent_events = [h for h in history if h["timestamp"] >= recent_window]
+        recent_flagged = [h for h in recent_events if h["priority"] >= 1]
+        result["recent_flagged_count"] = len(recent_flagged)
 
-# ---------- 2. CHA matching (primary CHA first, dynamic fallback, dedup) ----------
+        if level in ("low", "medium") and len(recent_flagged) >= 2:
+            original_priority = priority
+            priority = min(priority + 1, 3)
+            level = {1: "low", 2: "medium", 3: "high"}[priority]
+            result["level"] = level
+            result["priority"] = priority
+            result["escalated_by_trend"] = priority != original_priority
+
+    return result
+
+
+# ---------- 2. CHA matching (primary-first + dynamic fallback + dedup) ----------
 
 def score_cha(cha: CHA, elder: Elder) -> float:
     distance_score = 1.0 if cha.block == elder.block else 0.3
@@ -118,12 +167,6 @@ def score_cha(cha: CHA, elder: Elder) -> float:
 
 
 def match_cha(elder: Elder, chas: list[CHA], anomaly: dict, now: datetime) -> dict:
-    """
-    First check whether there's already an active case for this elder (dedup).
-    If not, run the normal matching flow: try the primary CHA first, and only
-    fall back to dynamic scoring if the primary is unavailable.
-    """
-    # --- Dedup check ---
     existing = active_cases.get(elder.name)
     if existing and (now - existing["created_at"]) < timedelta(minutes=10):
         existing["event_count"] += 1
@@ -131,11 +174,10 @@ def match_cha(elder: Elder, chas: list[CHA], anomaly: dict, now: datetime) -> di
         return {
             "assigned_to": existing["assigned_to"],
             "method": "merged_into_existing_case",
-            "reason": f"An active case already exists within the last 10 min "
-                      f"(signal #{existing['event_count']} for this case) — merged, no new dispatch",
+            "reason": f"Active case already open within the last 10 min "
+                      f"(signal #{existing['event_count']}) — merged, no new dispatch",
         }
 
-    # --- Normal matching flow ---
     primary = next((c for c in chas if c.name == elder.primary_cha), None)
     if primary and primary.is_available and primary.current_load < 8:
         result = {
@@ -154,10 +196,8 @@ def match_cha(elder: Elder, chas: list[CHA], anomaly: dict, now: datetime) -> di
             "method": "dynamic_fallback",
             "reason": f"Primary CHA unavailable — dynamic matching selected {best_cha.name} "
                       f"(composite score {best_score})",
-            "all_scores": [(c.name, s) for c, s in scored],
         }
 
-    # Record this as an active case for future dedup checks
     active_cases[elder.name] = {
         "assigned_to": result["assigned_to"],
         "created_at": now,
@@ -167,47 +207,91 @@ def match_cha(elder: Elder, chas: list[CHA], anomaly: dict, now: datetime) -> di
     return result
 
 
-# ---------- 3. Escalation summary (CHA/family trigger -> structured report) ----------
+# ---------- 3. Escalation (with dedup across triggers + interaction log) ----------
 
-def escalate(elder: Elder, anomaly: dict, cha_description: str = "") -> dict:
+def escalate(elder: Elder, anomaly: dict, triggered_by: str, cha_description: str = "",
+             interaction_note: str = "", now: datetime | None = None) -> dict:
     """
-    Called when a CHA or family member presses the escalate button.
-    Builds a structured summary using a fixed template (sufficient for the demo).
-    If an LLM is wired in, cha_description + recent history can be passed to the
-    model to produce a more natural triage summary — the integration point is
-    marked with a comment below.
+    `interaction_note` is new in v3: separate from the emergency description,
+    it captures what companionship/activity the CHA did during the visit
+    (chat, short walk, simple task) — this is how the "community engagement,
+    not just passive monitoring" requirement shows up in the data model.
     """
-    ts = datetime.now().strftime("%Y-%m-%d %H:%M")
+    now = now or datetime.now()
+
+    existing = active_escalations.get(elder.name)
+    if existing and (now - existing["created_at"]) < timedelta(minutes=15):
+        existing["triggered_by"].add(triggered_by)
+        if cha_description:
+            existing["cha_description"] = cha_description
+        return {
+            "merged": True,
+            "elder_name": elder.name,
+            "reason": f"An escalation for {elder.name} is already open "
+                      f"(originally triggered by {sorted(existing['triggered_by'] - {triggered_by})}, "
+                      f"now also confirmed by {triggered_by}) — merged, not sent twice",
+        }
+
+    ts = now.strftime("%Y-%m-%d %H:%M")
     report = {
         "elder_name": elder.name,
         "block": elder.block,
+        "condition": elder.condition,
+        "signal_type": anomaly["signal_type"],
         "anomaly_level": anomaly["level"],
-        "minutes_overdue": anomaly["minutes_overdue"],
+        "detail": anomaly["detail"],
         "recent_flagged_count": anomaly.get("recent_flagged_count", 0),
         "cha_description": cha_description or "(no on-site description provided)",
+        "interaction_note": interaction_note or "(no interaction logged)",
         "timestamp": ts,
+        "triggered_by": [triggered_by],
     }
 
     # ---- AI integration point ----
-    # If an LLM API is wired in, the fields in `report` plus `cha_description`
-    # can be passed as context to generate a more natural triage summary, e.g.:
-    #
-    # summary_text = call_llm_api(
-    #     f"Generate a concise hospital triage summary from this information: {report}"
-    # )
-    #
-    # For the demo, a fixed template is used instead:
+    # summary_text = call_llm_api(f"Generate a concise hospital triage summary: {report}")
     summary_text = (
         f"[CareBridge Triage Summary] {ts}\n"
-        f"Elder: {elder.name} (Block {elder.block})\n"
-        f"Anomaly level: {anomaly['level']} (overdue by {anomaly['minutes_overdue']} min; "
-        f"{anomaly.get('recent_flagged_count', 0)} related anomalies in the past 3 days)\n"
+        f"Elder: {elder.name} (Block {elder.block}, {elder.condition})\n"
+        f"Signal: {anomaly['signal_type']} — level {anomaly['level']}\n"
+        f"Detail: {anomaly['detail']}\n"
         f"CHA on-site description: {cha_description or '(none provided)'}\n"
         f"Recommendation: hospital telehealth / home-visit triage team to assess promptly"
     )
 
     report["summary_text"] = summary_text
+    report["merged"] = False
+
+    active_escalations[elder.name] = {
+        "created_at": now,
+        "triggered_by": {triggered_by},
+        "cha_description": cha_description,
+        "report": report,
+    }
     return report
+
+
+# ---------- Permission-tiered view ----------
+
+ROLE_FIELD_ACCESS = {
+    "cha": {
+        "elder_name", "block", "signal_type", "anomaly_level", "detail",
+        "cha_description", "interaction_note",
+    },
+    "family": {
+        "elder_name", "signal_type", "anomaly_level", "recent_flagged_count",
+        "cha_description", "interaction_note", "summary_text", "timestamp",
+    },
+    "hospital": "*",
+}
+
+
+def get_role_view(report: dict, role: str) -> dict:
+    allowed = ROLE_FIELD_ACCESS.get(role)
+    if allowed is None:
+        raise ValueError(f"Unknown role: {role}")
+    if allowed == "*":
+        return dict(report)
+    return {k: v for k, v in report.items() if k in allowed}
 
 
 # ---------- Notification ----------
@@ -215,20 +299,19 @@ def escalate(elder: Elder, anomaly: dict, cha_description: str = "") -> dict:
 def notify(elder: Elder, anomaly: dict, match_result: dict):
     ts = datetime.now().strftime("%H:%M:%S")
     print(f"[{ts}] Notification sent:")
-    print(f"  -> CHA \"{match_result['assigned_to']}\": please check on {elder.name}")
+    print(f"  -> CHA \"{match_result['assigned_to']}\": please check on {elder.name} "
+          f"({anomaly['signal_type']}, level={anomaly['level']})")
     if anomaly["level"] == "high" or anomaly.get("escalated_by_trend"):
         print(f"  -> Emergency contact \"{elder.emergency_contact}\": anomaly level {anomaly['level']}, please be aware")
-        if anomaly.get("escalated_by_trend"):
-            print(f"     (Note: escalated due to a recent pattern, not a single one-off signal)")
     print()
 
 
 # ---------- Demo main flow ----------
 
 def run_demo():
-    print("=" * 60)
-    print("CareBridge Core Logic Demo v2 — trend detection / dedup / escalation summary")
-    print("=" * 60)
+    print("=" * 65)
+    print("CareBridge Core Logic Demo v3 — Smartwatch signals (dementia care)")
+    print("=" * 65)
     print()
 
     chas = [
@@ -246,62 +329,63 @@ def run_demo():
 
     now = datetime.now()
 
-    # --- Scenario A: pre-populate history with 2 low-risk anomalies over the past 3 days ---
-    event_history[elder.name] = [
+    # --- Scenario A: SOS pressed — bypasses tiering entirely, immediate high priority ---
+    print("[1] SOS button pressed:")
+    sos_event = WatchEvent(elder_name="Mdm Lim", signal_type="sos_pressed", timestamp=now)
+    anomaly = detect_anomaly(sos_event)
+    print(f"    -> Level: {anomaly['level']} (bypassed tiering: {anomaly['bypassed_tiering']})")
+    match_result = match_cha(elder, chas, anomaly, now)
+    print(f"    -> Dispatch: {match_result['method']} -> {match_result['assigned_to']}")
+    notify(elder, anomaly, match_result)
+
+    # --- Scenario B: geofence exit, graded by how long outside the safe zone ---
+    print("[2] Geofence exit — Mdm Lim has been outside the safe zone for 35 minutes:")
+    geo_event = WatchEvent(
+        elder_name="Mdm Lim", signal_type="geofence_exit",
+        payload={"minutes_outside": 35, "distance_m": 420},
+        timestamp=now + timedelta(minutes=10),
+    )
+    anomaly2 = detect_anomaly(geo_event)
+    print(f"    -> Level: {anomaly2['level']}, detail: {anomaly2['detail']}\n")
+
+    # --- Scenario C: vital sign anomaly, mild deviation, gets escalated by trend ---
+    print("[3] Heart rate reading mildly abnormal (simulating a 3rd occurrence this week):")
+    event_history["Mdm Lim"] = [
         {"level": "low", "priority": 1, "timestamp": now - timedelta(days=2)},
         {"level": "low", "priority": 1, "timestamp": now - timedelta(hours=20)},
     ]
+    vital_event = WatchEvent(
+        elder_name="Mdm Lim", signal_type="vital_abnormal",
+        payload={"vital": "heart_rate", "value": 105, "deviation_pct": 12},
+        timestamp=now + timedelta(minutes=20),
+    )
+    anomaly3 = detect_anomaly(vital_event)
+    print(f"    -> Base tier would be low, but {anomaly3['recent_flagged_count']} recent anomalies on file")
+    print(f"    -> Final level: {anomaly3['level']} (escalated by trend: {anomaly3['escalated_by_trend']})\n")
 
-    # --- Scenario B: new signal that looks low-risk on its own, but gets escalated by trend ---
-    event = IoTEvent(elder_name="Mdm Lim", signal_type="pillbox_not_opened", minutes_overdue=18, timestamp=now)
-
-    print(f"[1] IoT signal: {event.signal_type}, overdue by {event.minutes_overdue} min")
-    anomaly = detect_anomaly(event)
-    print(f"    -> Base classification would be low-tier, but {anomaly['recent_flagged_count']} "
-          f"related anomalies occurred in the past 3 days")
-    print(f"    -> Final level: {anomaly['level']} (priority={anomaly['priority']}, "
-          f"escalated by trend: {anomaly['escalated_by_trend']})\n")
-
-    print("[2] CHA matching:")
-    match_result = match_cha(elder, chas, anomaly, now)
-    print(f"    -> Dispatch method: {match_result['method']}")
-    print(f"    -> {match_result['reason']}\n")
-
-    # ---- Raw data shape, for the frontend dev to build mock data against ----
-    print("[DATA FORMAT] anomaly object (JSON):")
-    print(json.dumps(anomaly, default=str, indent=2))
-    print()
-    print("[DATA FORMAT] match_result object (JSON):")
-    print(json.dumps({k: v for k, v in match_result.items() if k != "all_scores"}, default=str, indent=2))
-    print()
-
-    print("[3] Notification:")
-    notify(elder, anomaly, match_result)
-
-    # --- Scenario C: another signal 5 minutes later — should be deduplicated ---
-    event2 = IoTEvent(elder_name="Mdm Lim", signal_type="pillbox_not_opened", minutes_overdue=25,
-                       timestamp=now + timedelta(minutes=5))
-    print(f"[4] Another signal arrives 5 minutes later (simulating a duplicate trigger):")
-    anomaly2 = detect_anomaly(event2)
-    match_result2 = match_cha(elder, chas, anomaly2, event2.timestamp)
-    print(f"    -> Dispatch method: {match_result2['method']}")
-    print(f"    -> {match_result2['reason']}\n")
-
-    # --- Scenario D: CHA arrives on-site and presses the escalate button ---
-    print("[5] CHA arrives on-site, notices something is off, and presses escalate:")
-    report = escalate(elder, anomaly, cha_description="Elder is conscious but slower to respond than usual; "
-                                                        "blood pressure not yet measured — recommend clinical review")
+    # --- Scenario D: CHA visit includes both an anomaly check AND a companionship activity ---
+    print("[4] CHA visits in person — logs both the check and a companionship activity:")
+    report = escalate(
+        elder, anomaly3, triggered_by="cha",
+        cha_description="Checked on Mdm Lim after the heart rate alert — she seems fine, slightly tired.",
+        interaction_note="Had a 15-minute chat and short walk around the void deck together.",
+        now=now + timedelta(minutes=25),
+    )
     print(report["summary_text"])
     print()
 
-    # ---- Raw data shape for the escalation report ----
-    print("[DATA FORMAT] escalation report object (JSON):")
+    print("[DATA FORMAT] escalation report (JSON):")
     print(json.dumps(report, default=str, indent=2))
     print()
 
-    print("=" * 60)
+    print("[5] Role-based views of the same report:")
+    print("    CHA view:", json.dumps(get_role_view(report, "cha"), default=str))
+    print("    Family view:", json.dumps(get_role_view(report, "family"), default=str))
+    print()
+
+    print("=" * 65)
     print("Demo complete")
-    print("=" * 60)
+    print("=" * 65)
 
 
 if __name__ == "__main__":
