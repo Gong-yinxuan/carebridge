@@ -114,7 +114,7 @@
   .subtitle {
     color: var(--text-muted);
     font-size: 14px;
-    margin-bottom: 24px;
+    margin-bottom: 16px;
   }
 
   .card {
@@ -123,6 +123,42 @@
     border-radius: 14px;
     padding: 18px;
     margin-bottom: 14px;
+  }
+
+  /* ---- Feature status legend + badges (Round 2, item 7) ---- */
+  .legend-row {
+    display: flex; flex-wrap: wrap; gap: 16px; align-items: center;
+    font-size: 11.5px; color: var(--text-muted);
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 8px 12px;
+    margin-bottom: 22px;
+  }
+  .legend-dot {
+    width: 8px; height: 8px; border-radius: 50%;
+    display: inline-block; margin-right: 5px;
+  }
+  .legend-dot-built { background: var(--teal); }
+  .legend-dot-planned { background: #C98A2B; }
+
+  .section-label-row {
+    display: flex; align-items: center; gap: 8px;
+    margin: 20px 0 10px;
+  }
+  .section-label-row .section-label { margin: 0; }
+
+  .badge {
+    display: inline-flex; align-items: center;
+    font-size: 10px; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 0.04em;
+    padding: 2px 8px; border-radius: 999px;
+    flex-shrink: 0;
+  }
+  .badge-built { background: var(--pastel-green); color: var(--teal-dark); }
+  .badge-planned {
+    background: var(--pastel-yellow); color: #8A6516;
+    border: 1px dashed #C98A2B;
   }
 
   /* ---- Family Overview ---- */
@@ -169,6 +205,8 @@
 
   .btn-primary { background: var(--teal); color: white; }
   .btn-secondary { background: white; border: 1px solid var(--border); color: var(--text); }
+  .btn-police { background: #C24B4B; color: white; }
+  .btn[disabled] { opacity: 0.6; cursor: default; }
 
   .section-label {
     font-size: 12px; font-weight: 700; text-transform: uppercase;
@@ -206,6 +244,111 @@
     font-size: 13.5px; line-height: 1.5; color: var(--text);
   }
 
+  /* ---- Next visit / ad-hoc check-in (Round 2, items 10 & 11) ---- */
+  .visit-row {
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 12px; flex-wrap: wrap;
+  }
+  .visit-time { font-weight: 700; font-size: 16px; margin-top: 2px; }
+  .visit-time span { color: var(--text-muted); font-weight: 600; font-size: 12.5px; }
+  .btn-inline {
+    flex: none; padding: 10px 14px; border-radius: 10px;
+    font-weight: 700; font-size: 12.5px; cursor: pointer;
+    background: white; border: 1px solid var(--border); color: var(--text);
+  }
+
+  /* ---- Location / GPS (Round 2, item 9) ---- */
+  .map-mock {
+    position: relative;
+    height: 120px;
+    border-radius: 12px;
+    background:
+      linear-gradient(0deg, transparent 24%, rgba(20,33,61,.05) 25%, rgba(20,33,61,.05) 26%, transparent 27%, transparent 74%, rgba(20,33,61,.05) 75%, rgba(20,33,61,.05) 76%, transparent 77%),
+      linear-gradient(90deg, transparent 24%, rgba(20,33,61,.05) 25%, rgba(20,33,61,.05) 26%, transparent 27%, transparent 74%, rgba(20,33,61,.05) 75%, rgba(20,33,61,.05) 76%, transparent 77%),
+      var(--pastel-blue);
+    background-size: 24px 24px, 24px 24px, cover;
+    overflow: hidden;
+    margin-bottom: 12px;
+  }
+  .map-pin {
+    position: absolute; left: 52%; top: 46%;
+    width: 16px; height: 16px; border-radius: 50% 50% 50% 0;
+    background: var(--teal-dark);
+    transform: translate(-50%, -50%) rotate(-45deg);
+    box-shadow: 0 0 0 6px rgba(14,124,102,.15);
+  }
+  .geofence-ring {
+    position: absolute; left: 50%; top: 44%;
+    width: 76px; height: 76px; border-radius: 50%;
+    border: 2px dashed var(--teal);
+    transform: translate(-50%, -50%);
+    opacity: 0.55;
+  }
+  .geofence-ring.alert { border-color: #C24B4B; }
+  .map-caption {
+    position: absolute; bottom: 8px; left: 10px;
+    font-size: 10.5px; color: var(--text-muted);
+    background: rgba(255,255,255,0.85);
+    padding: 2px 7px; border-radius: 6px;
+  }
+
+  /* ---- Staff attribution (which CHA did the visit) ---- */
+  .staff-tag {
+    font-size: 11px; margin-top: 3px;
+    display: flex; align-items: center;
+  }
+  .staff-tag.primary { color: var(--text-muted); }
+  .staff-tag.covering { color: #8A6516; font-weight: 600; }
+  .staff-dot {
+    width: 6px; height: 6px; border-radius: 50%;
+    display: inline-block; margin-right: 5px; flex-shrink: 0;
+  }
+  .staff-dot.primary-dot { background: var(--teal); }
+  .staff-dot.covering-dot { background: #C98A2B; }
+
+  .care-team-card {
+    background: var(--pastel-yellow);
+    border: none;
+  }
+  .care-team-row {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 6px 0;
+  }
+  .care-team-name { font-weight: 700; font-size: 13.5px; }
+  .care-team-status { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .03em; }
+  .care-team-status.unavailable { color: #C24B4B; }
+  .care-team-status.covering { color: #8A6516; }
+  .care-team-desc { font-size: 12px; color: var(--text-muted); margin-top: 8px; line-height: 1.5; }
+
+  .pill-warn { background: var(--pastel-yellow); color: #8A6516; }
+  .pill-alert { background: var(--pastel-red); color: #C24B4B; }
+
+  /* ---- CHA caseload (multiple patients) ---- */
+  .caseload-item {
+    display: flex; align-items: center; gap: 12px;
+    padding: 12px 0; border-bottom: 1px solid var(--border);
+  }
+  .caseload-item:last-child { border-bottom: none; }
+  .caseload-avatar {
+    width: 38px; height: 38px; border-radius: 50%;
+    background: var(--teal); color: white;
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 700; font-size: 13px; flex-shrink: 0;
+  }
+  .caseload-info { flex: 1; min-width: 0; }
+  .caseload-name { font-weight: 700; font-size: 13.5px; }
+  .caseload-sub { font-size: 11.5px; color: var(--text-muted); margin-top: 1px; }
+  .caseload-meta { text-align: right; flex-shrink: 0; }
+  .caseload-next { font-size: 11px; color: var(--text-muted); margin-top: 5px; }
+
+  .prep-card { background: var(--pastel-blue); border: none; }
+  .prep-tip {
+    display: flex; gap: 8px; padding: 6px 0;
+    font-size: 13px; line-height: 1.5;
+  }
+  .prep-tip .tip-icon { flex-shrink: 0; }
+  .prep-note { font-size: 11.5px; color: var(--text-muted); margin-top: 8px; }
+
   /* ---- CHA Check-in ---- */
   .checklist-item {
     display: flex; align-items: center; gap: 10px;
@@ -238,6 +381,18 @@
     display: block; margin-top: 16px;
   }
 
+  .police-card {
+    background: var(--pastel-red);
+    border: none;
+  }
+  .police-card-title {
+    font-weight: 700; font-size: 13.5px; margin-bottom: 4px;
+    display: flex; align-items: center; gap: 6px;
+  }
+  .police-card-desc {
+    font-size: 12.5px; color: var(--text-muted); margin-bottom: 12px; line-height: 1.5;
+  }
+
   /* ---- Escalation ---- */
   .escalate-banner {
     background: var(--pastel-red);
@@ -254,6 +409,20 @@
     font-weight: 700; flex-shrink: 0;
   }
 
+  .id-card {
+    display: flex; gap: 14px; align-items: center;
+  }
+  .photo-frame {
+    width: 60px; height: 60px; border-radius: 12px;
+    background: var(--pastel-blue);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 24px;
+    flex-shrink: 0;
+    border: 1px solid var(--border);
+  }
+  .id-card-title { font-weight: 700; font-size: 13.5px; }
+  .id-card-desc { font-size: 12px; color: var(--text-muted); margin-top: 2px; line-height: 1.4; }
+
   .kv-row {
     display: flex; justify-content: space-between;
     padding: 9px 0; border-bottom: 1px solid var(--border);
@@ -262,6 +431,8 @@
   .kv-row:last-child { border-bottom: none; }
   .kv-key { color: var(--text-muted); }
   .kv-val { font-weight: 600; text-align: right; }
+  .kv-val.ok { color: var(--teal-dark); }
+  .kv-val.alert { color: #C24B4B; }
 
   .toggle-json {
     background: white;
@@ -289,6 +460,7 @@
     background: var(--pastel-blue);
     border-radius: 10px; padding: 10px 12px;
     margin-top: 16px;
+    line-height: 1.5;
   }
 </style>
 </head>
@@ -304,7 +476,9 @@
 
 <div class="tabs">
   <div class="tab active" data-page="family">Family view</div>
+  <div class="tab" data-page="profile">Patient profile</div>
   <div class="tab" data-page="cha">CHA check-in</div>
+  <div class="tab" data-page="caseload">CHA caseload</div>
   <div class="tab" data-page="escalate">Escalation summary</div>
 </div>
 
@@ -314,12 +488,17 @@
   <h1>Mdm Lim Ah Kim</h1>
   <div class="subtitle">Toa Payoh · 3-room flat · Early/mid-stage dementia · Age 78</div>
 
+  <div class="legend-row">
+    <span><span class="legend-dot legend-dot-built"></span>Built — backed by working logic</span>
+    <span><span class="legend-dot legend-dot-planned"></span>Planned — shown for the pitch, not yet wired up</span>
+  </div>
+
   <div class="card status-card">
     <div class="status-left">
       <div class="avatar">ML</div>
       <div>
         <div class="status-name">Doing okay right now</div>
-        <div class="status-sub">Last check-in: 20 min ago by Chen (CHA)</div>
+        <div class="status-sub">Last check-in: 20 min ago by Rachel (covering for Chen)</div>
       </div>
     </div>
     <div class="pill">STABLE</div>
@@ -330,13 +509,31 @@
     <button class="btn btn-secondary">💬 Message CHA</button>
   </div>
 
-  <div class="section-label">This week</div>
+  <div class="section-label-row">
+    <div class="section-label">Next visit</div>
+    <span class="badge badge-planned">Planned</span>
+  </div>
+  <div class="card">
+    <div class="visit-row">
+      <div>
+        <div class="status-sub">Next scheduled CHA visit</div>
+        <div class="visit-time">Today, 2:30 PM <span>(in 1h 45m)</span></div>
+      </div>
+      <button class="btn-inline" id="adhoc-btn" onclick="requestCheckIn()">📅 Request check-in now</button>
+    </div>
+  </div>
+
+  <div class="section-label-row">
+    <div class="section-label">This week</div>
+    <span class="badge badge-built">Built</span>
+  </div>
   <div class="card">
     <div class="timeline-item">
       <div class="dot dot-ok"></div>
       <div>
         <div class="timeline-text">CHA visit — medication confirmed, short walk together</div>
         <div class="timeline-time">Today, 9:40 AM</div>
+        <div class="staff-tag covering"><span class="staff-dot covering-dot"></span>Rachel — covering for Chen (primary CHA, unavailable)</div>
       </div>
     </div>
     <div class="timeline-item">
@@ -344,6 +541,7 @@
       <div>
         <div class="timeline-text">Heart rate slightly elevated — flagged, CHA checked in person</div>
         <div class="timeline-time">Yesterday, 4:12 PM</div>
+        <div class="staff-tag primary"><span class="staff-dot primary-dot"></span>Chen (primary CHA)</div>
       </div>
     </div>
     <div class="timeline-item">
@@ -351,6 +549,7 @@
       <div>
         <div class="timeline-text">Routine check-in — all normal, chatted for 15 min</div>
         <div class="timeline-time">Mon, 10:05 AM</div>
+        <div class="staff-tag primary"><span class="staff-dot primary-dot"></span>Chen (primary CHA)</div>
       </div>
     </div>
     <div class="timeline-item">
@@ -358,11 +557,29 @@
       <div>
         <div class="timeline-text">Social visit — joined 2 neighbours for chess at the void deck</div>
         <div class="timeline-time">Sun, 3:30 PM</div>
+        <div class="staff-tag primary"><span class="staff-dot primary-dot"></span>Chen (primary CHA)</div>
       </div>
     </div>
   </div>
 
-  <div class="section-label">Ask about her week</div>
+  <div class="section-label-row">
+    <div class="section-label">Location</div>
+    <span class="badge badge-planned">Planned</span>
+  </div>
+  <div class="card">
+    <div class="map-mock">
+      <div class="geofence-ring"></div>
+      <div class="map-pin"></div>
+      <div class="map-caption">Toa Payoh Lor 1 · within safe zone</div>
+    </div>
+    <div class="kv-row"><div class="kv-key">Last updated</div><div class="kv-val">3 min ago</div></div>
+    <div class="kv-row"><div class="kv-key">Geofence status</div><div class="kv-val ok">Within safe zone</div></div>
+  </div>
+
+  <div class="section-label-row">
+    <div class="section-label">Ask about her week</div>
+    <span class="badge badge-built">Built</span>
+  </div>
   <div class="chat-box">
     <div class="chat-q">"How has mum been doing this week?"</div>
     <div class="chat-a">
@@ -378,12 +595,96 @@
   </div>
 </div>
 
+<!-- ===================== PAGE: PATIENT PROFILE (family, one-time setup) ===================== -->
+<div class="page" id="profile">
+  <div class="eyebrow">David Tan (45) · son</div>
+  <h1>Patient profile — Mdm Lim</h1>
+  <div class="subtitle">Set up once — CHAs and the AI assistant use it automatically from here on</div>
+
+  <div class="legend-row">
+    <span><span class="legend-dot legend-dot-built"></span>Built — backed by working logic</span>
+    <span><span class="legend-dot legend-dot-planned"></span>Planned — shown for the pitch, not yet wired up</span>
+  </div>
+
+  <div class="section-label-row">
+    <div class="section-label">Daily routine</div>
+    <span class="badge badge-planned">Planned</span>
+  </div>
+  <div class="card">
+    <div class="kv-row"><div class="kv-key">Wake time</div><div class="kv-val">7:00 AM</div></div>
+    <div class="kv-row"><div class="kv-key">Breakfast</div><div class="kv-val">7:30 AM</div></div>
+    <div class="kv-row"><div class="kv-key">Lunch</div><div class="kv-val">12:00 PM</div></div>
+    <div class="kv-row"><div class="kv-key">Nap</div><div class="kv-val">1:30 – 2:30 PM</div></div>
+    <div class="kv-row"><div class="kv-key">Dinner</div><div class="kv-val">6:30 PM</div></div>
+    <div class="kv-row"><div class="kv-key">Bedtime</div><div class="kv-val">~10:00 PM</div></div>
+  </div>
+
+  <div class="section-label-row">
+    <div class="section-label">Medication schedule</div>
+    <span class="badge badge-planned">Planned</span>
+  </div>
+  <div class="card">
+    <div class="kv-row"><div class="kv-key">Donepezil 5mg</div><div class="kv-val">8:00 AM daily</div></div>
+    <div class="kv-row"><div class="kv-key">Amlodipine 5mg</div><div class="kv-val">8:00 PM daily</div></div>
+  </div>
+
+  <div class="section-label-row">
+    <div class="section-label">Mobility & preferences</div>
+    <span class="badge badge-planned">Planned</span>
+  </div>
+  <div class="card">
+    <div style="font-size:13.5px; line-height:1.6;">
+      Uses a cane, prefers ground-floor routes without stairs. Speaks Mandarin
+      and Hokkien at home — greetings in Mandarin help her settle in. Enjoys
+      chess and radio dramas.
+    </div>
+  </div>
+
+  <button class="btn btn-primary" id="save-profile-btn" onclick="saveProfile()" style="width:100%;">💾 Save profile</button>
+
+  <div class="footnote">
+    Fill this in once — it's what powers the AI chat assistant's answers and
+    gives every CHA (including backups covering a visit) the same starting
+    context, instead of the family repeating it every time.
+  </div>
+</div>
+
 <!-- ===================== PAGE 2: CHA CHECK-IN ===================== -->
 <div class="page" id="cha">
-  <div class="eyebrow">Chen (CHA) · On-site visit</div>
+  <div class="eyebrow">Rachel (CHA) · Covering for Chen · On-site visit</div>
   <h1>Check-in — Mdm Lim</h1>
   <div class="subtitle">Toa Payoh · Triggered by: heart rate alert (medium)</div>
 
+  <div class="legend-row">
+    <span><span class="legend-dot legend-dot-built"></span>Built — backed by working logic</span>
+    <span><span class="legend-dot legend-dot-planned"></span>Planned — shown for the pitch, not yet wired up</span>
+  </div>
+
+  <div class="section-label-row">
+    <div class="section-label">Care team</div>
+    <span class="badge badge-built">Built</span>
+  </div>
+  <div class="card care-team-card">
+    <div class="care-team-row">
+      <div class="care-team-name">Chen — primary CHA</div>
+      <div class="care-team-status unavailable">Unavailable</div>
+    </div>
+    <div class="care-team-row">
+      <div class="care-team-name">Rachel — covering this visit</div>
+      <div class="care-team-status covering">On-site now</div>
+    </div>
+    <div class="care-team-desc">
+      When the primary CHA can't respond, the system auto-assigns the nearest
+      available CHA. Every checklist item, note, and interaction below is
+      attributed to whoever actually performed it — so the family always
+      knows who was there, not just "a CHA."
+    </div>
+  </div>
+
+  <div class="section-label-row">
+    <div class="section-label">Visit checklist</div>
+    <span class="badge badge-built">Built</span>
+  </div>
   <div class="card">
     <div class="checklist-item">
       <div class="check-icon">✓</div>
@@ -402,20 +703,131 @@
       No signs of distress
     </div>
   </div>
+  <div class="staff-tag covering" style="margin-top:10px;"><span class="staff-dot covering-dot"></span>Checked off by Rachel (covering for Chen)</div>
 
   <label class="field-label">What happened</label>
   <textarea placeholder="e.g. Checked on Mdm Lim after the heart rate alert — she seems fine, slightly tired.">Checked on Mdm Lim after the heart rate alert — she seems fine, slightly tired.</textarea>
 
   <label class="field-label">Interaction / activity this visit</label>
   <textarea placeholder="e.g. Had a short chat, took a walk around the void deck.">Had a 15-minute chat and short walk around the void deck together.</textarea>
+  <div class="staff-tag covering"><span class="staff-dot covering-dot"></span>Logged by Rachel (covering for Chen)</div>
 
-  <div class="call-row" style="margin-top:20px;">
+  <div class="section-label-row">
+    <div class="section-label">Contact police</div>
+    <span class="badge badge-planned">Planned</span>
+  </div>
+  <div class="card police-card">
+    <div class="police-card-title">🚓 Auto-contact police</div>
+    <div class="police-card-desc">
+      Auto-triggers if a wandering alert (prolonged geofence exit) isn't
+      resolved in time. Family is notified automatically once police have
+      been contacted. Can also be raised manually below.
+    </div>
+    <button class="btn btn-police">🚓 Escalate to police now</button>
+  </div>
+
+  <div class="section-label-row">
+    <div class="section-label">Escalate to hospital / save</div>
+    <span class="badge badge-built">Built</span>
+  </div>
+  <div class="call-row">
     <button class="btn btn-secondary">🚨 Escalate to hospital</button>
     <button class="btn btn-primary">Save check-in</button>
   </div>
 
   <div class="footnote">
     CHAs record observations only — they do not diagnose, dose, or alter treatment.
+    Police contact is a separate, higher-severity path from hospital escalation
+    and always notifies the family once contact is confirmed.
+  </div>
+</div>
+
+<!-- ===================== PAGE: CHA CASELOAD (multiple patients) ===================== -->
+<div class="page" id="caseload">
+  <div class="eyebrow">Chen (CHA) · Caseload</div>
+  <h1>My patients</h1>
+  <div class="subtitle">Toa Payoh zone · 4 patients assigned</div>
+
+  <div class="legend-row">
+    <span><span class="legend-dot legend-dot-built"></span>Built — backed by working logic</span>
+    <span><span class="legend-dot legend-dot-planned"></span>Planned — shown for the pitch, not yet wired up</span>
+  </div>
+
+  <div class="section-label-row">
+    <div class="section-label">Today's patients</div>
+    <span class="badge badge-planned">Planned</span>
+  </div>
+  <div class="card">
+    <div class="caseload-item">
+      <div class="caseload-avatar">ML</div>
+      <div class="caseload-info">
+        <div class="caseload-name">Mdm Lim Ah Kim</div>
+        <div class="caseload-sub">Toa Payoh · 3-room flat</div>
+      </div>
+      <div class="caseload-meta">
+        <span class="pill pill-warn">MEDIUM</span>
+        <div class="caseload-next">Visited 9:40 AM (Rachel covering)</div>
+      </div>
+    </div>
+    <div class="caseload-item">
+      <div class="caseload-avatar">TC</div>
+      <div class="caseload-info">
+        <div class="caseload-name">Mr Tan Chwee Huat</div>
+        <div class="caseload-sub">Toa Payoh · 4-room flat</div>
+      </div>
+      <div class="caseload-meta">
+        <span class="pill">STABLE</span>
+        <div class="caseload-next">Next: 11:15 AM</div>
+      </div>
+    </div>
+    <div class="caseload-item">
+      <div class="caseload-avatar">SR</div>
+      <div class="caseload-info">
+        <div class="caseload-name">Mdm Siti Rohaya</div>
+        <div class="caseload-sub">Toa Payoh · 3-room flat</div>
+      </div>
+      <div class="caseload-meta">
+        <span class="pill">STABLE</span>
+        <div class="caseload-next">Next: 2:00 PM</div>
+      </div>
+    </div>
+    <div class="caseload-item">
+      <div class="caseload-avatar">KW</div>
+      <div class="caseload-info">
+        <div class="caseload-name">Mr Koh Wee Seng</div>
+        <div class="caseload-sub">Toa Payoh · 3-room flat</div>
+      </div>
+      <div class="caseload-meta">
+        <span class="pill pill-alert">TIGHT</span>
+        <div class="caseload-next">Needs backup — see below</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="section-label-row">
+    <div class="section-label">Patient prep — Mdm Lim Ah Kim</div>
+    <span class="badge badge-planned">Planned</span>
+  </div>
+  <div class="card prep-card">
+    <div class="prep-tip"><span class="tip-icon">🗣️</span> Responds best to Mandarin greetings; switches to Hokkien when tired.</div>
+    <div class="prep-tip"><span class="tip-icon">🌇</span> Mild confusion or agitation possible in late afternoon (sundowning) — keep visits calm and unhurried around this time.</div>
+    <div class="prep-tip"><span class="tip-icon">♟️</span> Enjoys chess — a good icebreaker if she seems withdrawn.</div>
+    <div class="prep-tip"><span class="tip-icon">🤝</span> Generally cooperative; prefers to be told before being touched or guided by the arm.</div>
+    <div class="prep-note">AI-generated from past visit notes — helps a covering CHA get oriented before arriving, without needing a handover call.</div>
+  </div>
+
+  <div class="section-label-row">
+    <div class="section-label">Need backup?</div>
+    <span class="badge badge-planned">Planned</span>
+  </div>
+  <div class="card" style="background: var(--pastel-yellow); border: none;">
+    <div style="font-weight:700; font-size:13.5px; margin-bottom:4px;">🙋 Request backup — Mr Koh Wee Seng</div>
+    <div style="font-size:12.5px; color:var(--text-muted); margin-bottom:12px; line-height:1.5;">
+      Running behind and can't make this visit in time? Send a request and
+      the system finds the nearest available CHA — the same matching logic
+      as an automatic reassignment, just started by you instead of the system.
+    </div>
+    <button class="btn" id="backup-btn" onclick="requestBackup()" style="background:#C98A2B; color:white;">🙋 Request backup CHA</button>
   </div>
 </div>
 
@@ -424,6 +836,14 @@
   <div class="eyebrow">Auto-generated · Sent to hospital triage</div>
   <h1>Escalation summary</h1>
   <div class="subtitle">Triggered by CHA · Merged with 1 family confirmation</div>
+
+  <div class="card id-card">
+    <div class="photo-frame">👤</div>
+    <div>
+      <div class="id-card-title">Photo on file</div>
+      <div class="id-card-desc">Included automatically in any escalation sent to police, so responders know who they're looking for.</div>
+    </div>
+  </div>
 
   <div class="escalate-banner">
     <div class="escalate-icon">!</div>
@@ -438,7 +858,18 @@
     <div class="kv-row"><div class="kv-key">Condition</div><div class="kv-val">Early/mid-stage dementia</div></div>
     <div class="kv-row"><div class="kv-key">Signal</div><div class="kv-val">vital_abnormal — heart_rate</div></div>
     <div class="kv-row"><div class="kv-key">Recent flagged (3d)</div><div class="kv-val">3</div></div>
-    <div class="kv-row"><div class="kv-key">Triggered by</div><div class="kv-val">CHA + Family</div></div>
+    <div class="kv-row"><div class="kv-key">Triggered by</div><div class="kv-val">Rachel (CHA, covering for Chen) + Family</div></div>
+  </div>
+
+  <div class="section-label">Location</div>
+  <div class="card">
+    <div class="map-mock" style="height:100px;">
+      <div class="geofence-ring"></div>
+      <div class="map-pin"></div>
+      <div class="map-caption">Toa Payoh Lor 1, home address</div>
+    </div>
+    <div class="kv-row"><div class="kv-key">Last known location</div><div class="kv-val">Home — Toa Payoh, 3-room flat</div></div>
+    <div class="kv-row"><div class="kv-key">Geofence status</div><div class="kv-val ok">Within safe zone</div></div>
   </div>
 
   <div class="section-label">Full report sent to hospital</div>
@@ -447,6 +878,7 @@
   </button>
   <div class="card" id="json-panel" style="display:none;">
     <div class="kv-row"><div class="kv-key">CHA notes</div><div class="kv-val">"seems fine, slightly tired"</div></div>
+    <div class="kv-row"><div class="kv-key">Logged by</div><div class="kv-val">Rachel — covering for Chen (primary)</div></div>
     <div class="kv-row"><div class="kv-key">Interaction logged</div><div class="kv-val">15-min chat + short walk</div></div>
     <div class="kv-row"><div class="kv-key">Confirmed by</div><div class="kv-val">CHA, Family</div></div>
     <div class="kv-row"><div class="kv-key">Duplicate reports merged</div><div class="kv-val">No</div></div>
@@ -454,6 +886,9 @@
 
   <div class="footnote">
     Generated by CareBridge's backend logic — same structure as the live demo script output.
+    Note: this example was triggered by a heart-rate anomaly. If instead triggered
+    by a prolonged geofence exit, CareBridge auto-contacts the police and notifies
+    the family once contact is confirmed — see the CHA check-in tab.
   </div>
 </div>
 
@@ -466,6 +901,24 @@
     icon.textContent = isHidden ? '▾' : '▸';
   }
 
+  function requestCheckIn() {
+    const btn = document.getElementById('adhoc-btn');
+    btn.textContent = '✓ Requested — CHA notified';
+    btn.disabled = true;
+  }
+
+  function saveProfile() {
+    const btn = document.getElementById('save-profile-btn');
+    btn.textContent = '✓ Saved — synced to CHA & AI assistant';
+    btn.disabled = true;
+  }
+
+  function requestBackup() {
+    const btn = document.getElementById('backup-btn');
+    btn.textContent = '✓ Backup requested — searching nearest CHA';
+    btn.disabled = true;
+  }
+
   document.querySelectorAll('.tab').forEach(tab => {
     tab.addEventListener('click', () => {
       document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
@@ -475,9 +928,6 @@
     });
   });
 </script>
-
-</body>
-</html>
 
 </body>
 </html>
